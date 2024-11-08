@@ -418,7 +418,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Path: ../libraries/RC_Channel/RC_Channels_VarInfo.h
     AP_SUBGROUPINFO(rc_channels, "RC", 4, ParametersG2, RC_Channels_Rover),
 
-#if ADVANCED_FAILSAFE == ENABLED
+#if AP_ROVER_ADVANCED_FAILSAFE_ENABLED
     // @Group: AFS_
     // @Path: ../libraries/AP_AdvancedFailsafe/AP_AdvancedFailsafe.cpp
     AP_SUBGROUPINFO(afs, "AFS_", 5, ParametersG2, AP_AdvancedFailsafe),
@@ -667,7 +667,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("MANUAL_OPTIONS", 53, ParametersG2, manual_options, 0),
 
-#if MODE_DOCK_ENABLED == ENABLED
+#if MODE_DOCK_ENABLED
     // @Group: DOCK
     // @Path: mode_dock.cpp
     AP_SUBGROUPPTR(mode_dock_ptr, "DOCK", 54, ParametersG2, ModeDock),
@@ -729,21 +729,21 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
 
 ParametersG2::ParametersG2(void)
     :
-#if ADVANCED_FAILSAFE == ENABLED
+#if AP_ROVER_ADVANCED_FAILSAFE_ENABLED
     afs(),
 #endif
 #if AP_BEACON_ENABLED
     beacon(),
 #endif
-    motors(wheel_rate_control),
     wheel_rate_control(wheel_encoder),
+    motors(wheel_rate_control),
     attitude_control(),
     smart_rtl(),
-#if MODE_DOCK_ENABLED == ENABLED
-    mode_dock_ptr(&rover.mode_dock),
-#endif
 #if HAL_PROXIMITY_ENABLED
     proximity(),
+#endif
+#if MODE_DOCK_ENABLED
+    mode_dock_ptr(&rover.mode_dock),
 #endif
 #if AP_AVOIDANCE_ENABLED
     avoid(),
@@ -752,9 +752,9 @@ ParametersG2::ParametersG2(void)
     follow(),
 #endif
     windvane(),
-    pos_control(attitude_control),
     wp_nav(attitude_control, pos_control),
-    sailboat()
+    sailboat(),
+    pos_control(attitude_control)
 {
     AP_Param::setup_object_defaults(this, var_info);
 }

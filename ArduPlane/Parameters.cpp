@@ -156,7 +156,7 @@ const AP_Param::Info Plane::var_info[] = {
     // @Range: 0 100
     // @Increment: 1
     // @User: Standard
-    ASCALAR(takeoff_throttle_min,       "TKOFF_THR_MIN",    60),
+    ASCALAR(takeoff_throttle_min,       "TKOFF_THR_MIN",    0),
 
     // @Param: TKOFF_OPTIONS
     // @DisplayName: Takeoff options
@@ -782,7 +782,7 @@ const AP_Param::Info Plane::var_info[] = {
     GOBJECT(relay,                  "RELAY", AP_Relay),
 #endif
 
-#if PARACHUTE == ENABLED
+#if HAL_PARACHUTE_ENABLED
 	// @Group: CHUTE_
     // @Path: ../libraries/AP_Parachute/AP_Parachute.cpp
     GOBJECT(parachute,		"CHUTE_", AP_Parachute),
@@ -1019,6 +1019,12 @@ const AP_Param::Info Plane::var_info[] = {
     // @Path: mode_takeoff.cpp
     GOBJECT(mode_takeoff, "TKOFF_", ModeTakeoff),
 
+#if AP_PLANE_GLIDER_PULLUP_ENABLED
+    // @Group: PUP_
+    // @Path: pullup.cpp
+    GOBJECTN(mode_auto.pullup, pullup, "PUP_", GliderPullup),
+#endif
+    
     // @Group:
     // @Path: ../libraries/AP_Vehicle/AP_Vehicle.cpp
     PARAM_VEHICLE_INFO,
@@ -1218,11 +1224,11 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("RTL_CLIMB_MIN", 27, ParametersG2, rtl_climb_min, 0),
 
-#if OFFBOARD_GUIDED == ENABLED
+#if AP_PLANE_OFFBOARD_GUIDED_SLEW_ENABLED
     // @Group: GUIDED_
     // @Path: ../libraries/AC_PID/AC_PID.cpp
     AP_SUBGROUPINFO(guidedHeading, "GUIDED_", 28, ParametersG2, AC_PID),
-#endif // OFFBOARD_GUIDED == ENABLED
+#endif // AP_PLANE_OFFBOARD_GUIDED_SLEW_ENABLED
 
     // @Param: MAN_EXPO_ROLL
     // @DisplayName: Manual control expo for roll
@@ -1274,16 +1280,25 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_SUBGROUPINFO(precland, "PLND_", 35, ParametersG2, AC_PrecLand),
 #endif
 
+#if AP_RANGEFINDER_ENABLED
+    // @Param: RNGFND_LND_ORNT
+    // @DisplayName: rangefinder landing orientation
+    // @Description: The orientation of rangefinder to use for landing detection. Should be set to Down for normal downward facing rangefinder and Back for rearward facing rangefinder for quadplane tailsitters. Custom orientation can be used with Custom1 or Custom2. The orientation must match at least one of the available rangefinders.
+    // @Values: 4:Back, 25:Down, 101:Custom1, 102:Custom2
+    // @User: Standard
+    AP_GROUPINFO("RNGFND_LND_ORNT", 36, ParametersG2, rangefinder_land_orient, ROTATION_PITCH_270),
+#endif
+    
     AP_GROUPEND
 };
 
 ParametersG2::ParametersG2(void) :
     unused_integer{1}
-#if HAL_SOARING_ENABLED
-    ,soaring_controller(plane.TECS_controller, plane.aparm)
-#endif
 #if HAL_BUTTON_ENABLED
     ,button_ptr(&plane.button)
+#endif
+#if HAL_SOARING_ENABLED
+    ,soaring_controller(plane.TECS_controller, plane.aparm)
 #endif
 {
     AP_Param::setup_object_defaults(this, var_info);
@@ -1362,9 +1377,15 @@ struct RCConversionInfo {
 static const RCConversionInfo rc_option_conversion[] = {
     { Parameters::k_param_flapin_channel_old, 0, RC_Channel::AUX_FUNC::FLAP},
     { Parameters::k_param_g2, 968, RC_Channel::AUX_FUNC::SOARING},
+#if AP_FENCE_ENABLED
     { Parameters::k_param_fence_channel, 0, RC_Channel::AUX_FUNC::FENCE},
+#endif
+#if AP_MISSION_ENABLED
     { Parameters::k_param_reset_mission_chan, 0, RC_Channel::AUX_FUNC::MISSION_RESET},
+#endif
+#if HAL_PARACHUTE_ENABLED
     { Parameters::k_param_parachute_channel, 0, RC_Channel::AUX_FUNC::PARACHUTE_RELEASE},
+#endif
     { Parameters::k_param_fbwa_tdrag_chan, 0, RC_Channel::AUX_FUNC::FBWA_TAILDRAGGER},
     { Parameters::k_param_reset_switch_chan, 0, RC_Channel::AUX_FUNC::MODE_SWITCH_RESET},
 };
